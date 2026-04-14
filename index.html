@@ -5,6 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Балансы рекламных платформ</title>
   <style>
+    :root {
+      --primary: #4472C4;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --light: #f8f9fa;
+      --dark: #343a40;
+      --border: #dee2e6;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f5f7fa;
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* 🔹 Панель управления */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 15px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .toolbar-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .toolbar-group label {
+      font-size: 13px;
+      color: #666;
+      margin-right: 5px;
+    }
+    
+    /* 🔹 Кнопки */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: var(--warning); color: #212529; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { 
+      background: transparent; 
+      border: 1px solid var(--border); 
+      color: #333;
+    }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    .btn-small {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+    
+    /* 🔹 Статус кнопки */
     .status-btn {
       border: none;
       padding: 5px 12px;
@@ -13,7 +91,7 @@
       font-size: 13px;
       font-weight: bold;
       transition: all 0.2s;
-      font-family: Arial, sans-serif;
+      font-family: inherit;
       user-select: none;
       outline: none;
     }
@@ -21,432 +99,686 @@
     .status-btn.paused { background-color: #fff3cd; color: #856404; }
     .status-btn:hover { opacity: 0.85; transform: scale(1.02); }
     
-    .calc-cell { font-weight: bold; color: #333; }
-    .danger-cell { color: #d9534f !important; }
-    .good-cell { color: #5cb85c !important; }
+    /* 🔹 Таблица */
+    .table-wrapper {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 1100px;
+      font-size: 14px;
+    }
+    th {
+      background-color: var(--primary);
+      color: white;
+      padding: 12px 10px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    th[contenteditable="true"]:hover {
+      background-color: #3a5ea5;
+      cursor: text;
+    }
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+    tbody tr.edit-mode td[contenteditable="true"] {
+      background-color: #fff9e6;
+      border: 1px dashed #ffc107;
+      border-radius: 4px;
+    }
+    
+    /* 🔹 Редактируемые ячейки */
+    [contenteditable="true"] {
+      cursor: text;
+      outline: none;
+      min-width: 60px;
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    [contenteditable="true"]:focus {
+      background: #e3f2fd;
+      box-shadow: 0 0 0 2px #4472C4 inset;
+    }
+    
+    /* 🔹 Цветовая индикация */
+    .danger-cell { color: #dc3545 !important; font-weight: 600; }
+    .good-cell { color: #28a745 !important; font-weight: 600; }
+    
+    /* 🔹 Действия в строке */
+    .row-actions {
+      display: flex;
+      gap: 5px;
+      justify-content: flex-end;
+    }
+    
+    /* 🔹 Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .modal-title {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .modal-body {
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    
+    /* 🔹 Форма добавления */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.15);
+    }
+    
+    /* 🔹 Уведомления */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: #333;
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #212529; }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    /* 🔹 Итоговая строка */
+    tfoot tr {
+      background-color: var(--primary) !important;
+      color: white !important;
+      font-weight: 600;
+    }
+    
+    /* 🔹 Адаптив */
+    @media (max-width: 768px) {
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar-group { justify-content: space-between; }
+      table { font-size: 13px; }
+      th, td { padding: 8px 6px; }
+    }
   </style>
 </head>
-<body style="margin: 0; padding: 20px; background: #f5f7fa; font-family: Arial, sans-serif;">
+<body>
 
-<table border="1" style="border-collapse: collapse; width: 100%; max-width: 1300px; font-family: Arial, sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; background: #fff;">
-<thead>
-<tr style="background-color:#4472C4; color:white;">
-<th colspan="8" style="padding: 15px; text-align: center; font-size: 16px;">БАЛАНСЫ РЕКЛАМНЫХ ПЛАТФОРМ НА <span id="header-date"></span></th>
-</tr>
-<tr style="background-color:#D6DCE4;">
-<th style="padding: 10px; text-align: left;">Источник</th>
-<th style="padding: 10px; text-align: right;">Баланс</th>
-<th style="padding: 10px; text-align: center;">Статус</th>
-<th style="padding: 10px; text-align: right;">Расход в день</th>
-<th style="padding: 10px; text-align: right;">6 дней</th>
-<th style="padding: 10px; text-align: center;">Хватит До</th>
-<th style="padding: 10px; text-align: right;">Зачислено</th>
-<th style="padding: 10px; text-align: center;">Последнее пополнение</th>
-</tr>
-</thead>
-<tbody>
-<!-- Строка 1 -->
-<tr>
-<td style="padding: 8px 15px;">Adcash</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$76,96</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$12,50</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$75,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">19.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:32</td>
-</tr>
-<!-- Строка 2 -->
-<tr>
-<td style="padding: 8px 15px;">Buymedia</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$230,51</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$45,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$270,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">18.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 13:45</td>
-</tr>
-<!-- Строка 3 -->
-<tr>
-<td style="padding: 8px 15px;">Clickadilla</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$80,37</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$18,20</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$109,20</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 12:18</td>
-</tr>
-<!-- 🔹 НОВАЯ СТРОКА: Clickaine 🔹 -->
-<tr>
-<td style="padding: 8px 15px;">Clickaine</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;"></td>
-</tr>
-<!-- Строка 4 -->
-<tr>
-<td style="padding: 8px 15px;">ExoClick</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$22,63</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$8,50</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$51,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">15.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 10:15</td>
-</tr>
-<!-- Строка 5 -->
-<tr>
-<td style="padding: 8px 15px;">Hilltopads</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$297,47</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$62,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$372,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:01</td>
-</tr>
-<!-- Строка 6 -->
-<tr>
-<td style="padding: 8px 15px;">Kadam</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$109,95</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$25,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$150,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 11:22</td>
-</tr>
-<!-- Строка 7 -->
-<tr>
-<td style="padding: 8px 15px;">MyBid</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$409,00</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$85,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$510,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:30</td>
-</tr>
-<!-- Строка 8 -->
-<tr>
-<td style="padding: 8px 15px;">Targeleon</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$39,21</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">12.04.25 18:43</td>
-</tr>
-<!-- Строка 9 -->
-<tr>
-<td style="padding: 8px 15px;">Traforama</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$10,80</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">11.04.25 09:12</td>
-</tr>
-<!-- Строка 10 -->
-<tr>
-<td style="padding: 8px 15px;">VisitWeb</td>
-<td class="balance-cell" contenteditable="true" data-currency="RUB" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">2 381,31 ₽</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">450,00 ₽</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">2 700,00 ₽</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">18.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:35</td>
-</tr>
-<!-- Строка 11 -->
-<tr>
-<td style="padding: 8px 15px;">ZeroPark</td>
-<td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$298,58</td>
-<td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td>
-<td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$55,00</td>
-<td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$330,00</td>
-<td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">19.04.25</td>
-<td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-<td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:28</td>
-</tr>
+<div class="container">
+  
+  <!-- 🔹 Панель управления -->
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <button id="btn-edit-mode" class="btn btn-outline">✏️ Включить редактирование</button>
+      <button id="btn-add-row" class="btn btn-success" disabled>➕ Добавить платформу</button>
+      <button id="btn-reset" class="btn btn-warning">↺ Сбросить данные</button>
+    </div>
+    <div class="toolbar-group" style="margin-left: auto;">
+      <button id="btn-save" class="btn btn-primary">💾 Сохранить</button>
+      <button id="btn-export" class="btn btn-success">📄 Экспорт CSV</button>
+    </div>
+  </div>
 
-<!-- ИТОГО -->
-<tr style="background-color:#4472C4; color:white; font-weight:bold; font-size:14px;">
-<td style="padding: 12px 15px; text-align: right;">ИТОГО ПО ВСЕМ КАТЕГОРИЯМ</td>
-<td id="total-balance" style="padding: 12px 15px; text-align: right;"></td>
-<td id="active-count" style="padding: 12px 15px; text-align: center;">9/12</td>
-<td id="total-spend" style="padding: 12px 15px; text-align: right;"></td>
-<td style="padding: 12px 15px; text-align: right;"></td>
-<td style="padding: 12px 15px; text-align: center;"></td>
-<td style="padding: 12px 15px; text-align: right;"></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+  <!-- 🔹 Таблица -->
+  <div class="table-wrapper">
+    <table id="balances-table">
+      <thead>
+        <tr>
+          <th style="min-width: 150px;">Источник</th>
+          <th style="min-width: 100px; text-align: right;">Баланс</th>
+          <th style="min-width: 100px; text-align: center;">Статус</th>
+          <th style="min-width: 110px; text-align: right;">Расход в день</th>
+          <th style="min-width: 90px; text-align: right;">6 дней</th>
+          <th style="min-width: 100px; text-align: center;">Хватит До</th>
+          <th style="min-width: 90px; text-align: right;">Зачислено</th>
+          <th style="min-width: 140px; text-align: center;">Последнее пополнение</th>
+          <th style="min-width: 80px; text-align: center;" class="actions-header">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Строки будут добавлены через JS -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td style="text-align: right;">ИТОГО ПО ВСЕМ КАТЕГОРИЯМ</td>
+          <td id="total-balance" style="text-align: right;"></td>
+          <td id="active-count" style="text-align: center;"></td>
+          <td id="total-spend" style="text-align: right;"></td>
+          <td></td><td></td><td></td><td></td><td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
 
-<!-- КНОПКИ УПРАВЛЕНИЯ -->
-<div style="text-align: right; font-family: Arial, sans-serif; max-width: 1300px; margin: 0 auto;">
-    <button id="btn-save" style="background-color: #4472C4; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; font-size: 14px;">💾 Сохранить изменения</button>
-    <button id="btn-export" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;">📄 Экспорт в CSV</button>
+</div>
+
+<!-- 🔹 Модальное окно: Добавить платформу -->
+<div id="modal-add" class="modal">
+  <div class="modal-content">
+    <h3 class="modal-title">➕ Добавить новую платформу</h3>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Название платформы *</label>
+        <input type="text" id="new-name" placeholder="Например: PropellerAds">
+      </div>
+      <div class="form-group">
+        <label>Валюта *</label>
+        <select id="new-currency">
+          <option value="USD">USD ($)</option>
+          <option value="RUB">RUB (₽)</option>
+          <option value="EUR">EUR (€)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Начальный баланс</label>
+        <input type="text" id="new-balance" placeholder="0,00" value="0,00">
+      </div>
+      <div class="form-group">
+        <label>Расход в день</label>
+        <input type="text" id="new-spend" placeholder="0,00" value="0,00">
+      </div>
+      <div class="form-group">
+        <label>Статус</label>
+        <select id="new-status">
+          <option value="Active">● Active</option>
+          <option value="Pause">◐ Pause</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add')">Отмена</button>
+      <button class="btn btn-success" onclick="addNewRow()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Модальное окно: Подтверждение -->
+<div id="modal-confirm" class="modal">
+  <div class="modal-content">
+    <h3 class="modal-title" id="confirm-title">Подтверждение</h3>
+    <div class="modal-body" id="confirm-message"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-confirm')">Отмена</button>
+      <button class="btn btn-danger" id="confirm-yes">Подтвердить</button>
+    </div>
+  </div>
 </div>
 
 <script>
+// 🔹 Исходные данные (шаблон)
+const defaultData = [
+  { name: "Adcash", currency: "USD", balance: 76.96, spend: 12.50, status: "Active", credited: 0, replenish: "13.04.25 14:32" },
+  { name: "Buymedia", currency: "USD", balance: 230.51, spend: 45.00, status: "Active", credited: 0, replenish: "13.04.25 13:45" },
+  { name: "Clickadilla", currency: "USD", balance: 80.37, spend: 18.20, status: "Active", credited: 0, replenish: "13.04.25 12:18" },
+  { name: "Clickaine", currency: "USD", balance: 0, spend: 0, status: "Pause", credited: 0, replenish: "" },
+  { name: "ExoClick", currency: "USD", balance: 22.63, spend: 8.50, status: "Active", credited: 0, replenish: "13.04.25 10:15" },
+  { name: "Hilltopads", currency: "USD", balance: 297.47, spend: 62.00, status: "Active", credited: 0, replenish: "13.04.25 14:01" },
+  { name: "Kadam", currency: "USD", balance: 109.95, spend: 25.00, status: "Active", credited: 0, replenish: "13.04.25 11:22" },
+  { name: "MyBid", currency: "USD", balance: 409.00, spend: 85.00, status: "Active", credited: 0, replenish: "13.04.25 14:30" },
+  { name: "Targeleon", currency: "USD", balance: 39.21, spend: 0, status: "Pause", credited: 0, replenish: "12.04.25 18:43" },
+  { name: "Traforama", currency: "USD", balance: 10.80, spend: 0, status: "Pause", credited: 0, replenish: "11.04.25 09:12" },
+  { name: "VisitWeb", currency: "RUB", balance: 2381.31, spend: 450.00, status: "Active", credited: 0, replenish: "13.04.25 14:35" },
+  { name: "ZeroPark", currency: "USD", balance: 298.58, spend: 55.00, status: "Active", credited: 0, replenish: "13.04.25 14:28" }
+];
+
+// 🔹 Глобальные переменные
+let editMode = false;
+let today = new Date();
+let dd = String(today.getDate()).padStart(2, '0');
+let mm = String(today.getMonth() + 1).padStart(2, '0');
+let yy = String(today.getFullYear()).slice(-2);
+
+// 🔹 Инициализация
 document.addEventListener('DOMContentLoaded', () => {
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2, '0');
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const yy = String(today.getFullYear()).slice(-2);
-    document.getElementById('header-date').textContent = `${dd}.${mm}.${yy}`;
+  document.getElementById('header-date')?.textContent || 
+    (document.querySelector('title').textContent += ` на ${dd}.${mm}.${yy}`);
+  
+  loadData();
+  renderTable();
+  updateCalculatedColumns();
+  updateActiveCount();
+  setupEventListeners();
+});
 
-    const balanceCells = document.querySelectorAll('.balance-cell');
-    const spendCells = document.querySelectorAll('.spend-cell');
-    const sixDaysCells = document.querySelectorAll('.six-days-cell');
-    const enoughUntilCells = document.querySelectorAll('.enough-until-cell');
-    const creditedCells = document.querySelectorAll('.credited-cell');
-    const replenishCells = document.querySelectorAll('.replenish-cell');
-    const statusBtns = document.querySelectorAll('.status-btn');
-    const totalCell = document.getElementById('total-balance');
-    const totalSpendCell = document.getElementById('total-spend');
-    const activeCountCell = document.getElementById('active-count');
-    const btnSave = document.getElementById('btn-save');
-    const btnExport = document.getElementById('btn-export');
+// 🔹 Загрузка данных
+function loadData() {
+  const saved = localStorage.getItem('adBalancesDataV3');
+  window.currentData = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultData));
+}
 
-    function updateReplenishDate(row) {
-        const dateCell = row.querySelector('.replenish-cell');
-        if (dateCell) {
-            const now = new Date();
-            const d = String(now.getDate()).padStart(2, '0');
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const y = String(now.getFullYear()).slice(-2);
-            const h = String(now.getHours()).padStart(2, '0');
-            const min = String(now.getMinutes()).padStart(2, '0');
-            dateCell.textContent = `${d}.${m}.${y} ${h}:${min}`;
-        }
+// 🔹 Рендер таблицы
+function renderTable() {
+  const tbody = document.querySelector('#balances-table tbody');
+  tbody.innerHTML = '';
+  
+  window.currentData.forEach((item, index) => {
+    const tr = document.createElement('tr');
+    const symbol = item.currency === 'USD' ? '$' : item.currency === 'RUB' ? '₽' : '€';
+    const fmt = (n) => Number(n).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    tr.innerHTML = `
+      <td contenteditable="${editMode}" data-field="name" class="editable-name">${item.name}</td>
+      <td contenteditable="${editMode}" data-field="balance" data-currency="${item.currency}" 
+          class="editable-balance" style="text-align: right;">${symbol}${fmt(item.balance)}</td>
+      <td style="text-align: center;">
+        <button class="status-btn ${item.status === 'Active' ? 'active' : 'paused'}" 
+                data-status="${item.status}" ${!editMode ? 'disabled' : ''}>
+          ${item.status === 'Active' ? '● Active' : '◐ Pause'}
+        </button>
+      </td>
+      <td contenteditable="${editMode}" data-field="spend" data-currency="${item.currency}" 
+          class="editable-spend" style="text-align: right;">${symbol}${fmt(item.spend)}</td>
+      <td class="six-days-cell" style="text-align: right; font-weight: 600;">${symbol}${fmt(item.spend * 6)}</td>
+      <td class="enough-until-cell" style="text-align: center; font-weight: 600;">${calcEnoughUntil(item.balance, item.spend)}</td>
+      <td contenteditable="${editMode}" data-field="credited" class="editable-credited" style="text-align: right;">${item.credited}</td>
+      <td contenteditable="${editMode}" data-field="replenish" class="editable-replenish" style="text-align: center; color: #666;">${item.replenish}</td>
+      <td style="text-align: center;">
+        <div class="row-actions">
+          <button class="btn btn-small btn-danger ${!editMode ? 'disabled' : ''}" onclick="deleteRow(${index})">🗑</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  // Обновляем визуальное состояние
+  document.body.classList.toggle('edit-mode', editMode);
+  document.getElementById('btn-edit-mode').textContent = editMode ? '✅ Готово' : '✏️ Включить редактирование';
+  document.getElementById('btn-edit-mode').className = `btn ${editMode ? 'btn-success' : 'btn-outline'}`;
+  document.getElementById('btn-add-row').disabled = !editMode;
+  
+  // Навешиваем обработчики на новые элементы
+  attachCellHandlers();
+  attachStatusHandlers();
+}
+
+// 🔹 Расчёт "Хватит до"
+function calcEnoughUntil(balance, spend) {
+  if (spend <= 0) return '∞';
+  const daysLeft = balance / spend;
+  const future = new Date();
+  future.setDate(today.getDate() + Math.ceil(daysLeft));
+  const fd = String(future.getDate()).padStart(2, '0');
+  const fm = String(future.getMonth() + 1).padStart(2, '0');
+  const fy = String(future.getFullYear()).slice(-2);
+  return `${fd}.${fm}.${fy}`;
+}
+
+// 🔹 Обновление рассчитанных колонок
+function updateCalculatedColumns() {
+  const rows = document.querySelectorAll('tbody tr');
+  rows.forEach((row, i) => {
+    const item = window.currentData[i];
+    const symbol = item.currency === 'USD' ? '$' : item.currency === 'RUB' ? '₽' : '€';
+    const fmt = (n) => Number(n).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    // 6 дней
+    const sixDaysCell = row.querySelector('.six-days-cell');
+    sixDaysCell.textContent = `${symbol}${fmt(item.spend * 6)}`;
+    
+    // Хватит до + цветовая индикация
+    const enoughCell = row.querySelector('.enough-until-cell');
+    if (item.spend <= 0) {
+      enoughCell.textContent = '∞';
+      enoughCell.className = 'enough-until-cell';
+    } else {
+      const daysLeft = item.balance / item.spend;
+      enoughCell.textContent = calcEnoughUntil(item.balance, item.spend);
+      enoughCell.className = `enough-until-cell ${daysLeft < 3 ? 'danger-cell' : 'good-cell'}`;
     }
+  });
+  
+  // Итоги
+  calculateTotals();
+}
 
-    function updateCalculatedColumns() {
-        calculateTotals();
-        for (let i = 0; i < balanceCells.length; i++) {
-            const row = balanceCells[i].closest('tr');
-            const balanceText = balanceCells[i].textContent.trim();
-            const spendText = row.querySelector('.spend-cell').textContent.trim();
-            const currency = balanceCells[i].dataset.currency;
-            const symbol = currency === 'USD' ? '$' : '₽';
+// 🔹 Расчёт итогов
+function calculateTotals() {
+  let totalUSD = 0, totalRUB = 0, totalEUR = 0;
+  let spendUSD = 0, spendRUB = 0, spendEUR = 0;
+  
+  window.currentData.forEach(item => {
+    if (item.currency === 'USD') { totalUSD += item.balance; spendUSD += item.spend; }
+    else if (item.currency === 'RUB') { totalRUB += item.balance; spendRUB += item.spend; }
+    else if (item.currency === 'EUR') { totalEUR += item.balance; spendEUR += item.spend; }
+  });
+  
+  const fmt = (n) => Number(n).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  let totalText = '';
+  if (totalUSD) totalText += `$ ${fmt(totalUSD)} `;
+  if (totalRUB) totalText += `${fmt(totalRUB)} ₽ `;
+  if (totalEUR) totalText += `€ ${fmt(totalEUR)} `;
+  
+  let spendText = '';
+  if (spendUSD) spendText += `$ ${fmt(spendUSD)} `;
+  if (spendRUB) spendText += `${fmt(spendRUB)} ₽ `;
+  if (spendEUR) spendText += `€ ${fmt(spendEUR)} `;
+  
+  document.getElementById('total-balance').textContent = totalText.trim() || '—';
+  document.getElementById('total-spend').textContent = spendText.trim() || '—';
+}
 
-            const balanceNum = parseFloat(balanceText.replace(/[^0-9,.\-]/g, '').replace(',', '.'));
-            const spendNum = parseFloat(spendText.replace(/[^0-9,.\-]/g, '').replace(',', '.'));
+// 🔹 Счётчик активных
+function updateActiveCount() {
+  const active = window.currentData.filter(i => i.status === 'Active').length;
+  document.getElementById('active-count').textContent = `${active}/${window.currentData.length}`;
+}
 
-            const sixDaysValue = spendNum * 6;
-            const formattedSixDays = sixDaysValue.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            sixDaysCells[i].textContent = `${symbol}${formattedSixDays}`;
-
-            const enoughUntilCell = row.querySelector('.enough-until-cell');
-            if (spendNum <= 0) {
-                enoughUntilCell.textContent = "∞";
-                enoughUntilCell.className = 'enough-until-cell';
-            } else {
-                const daysLeft = balanceNum / spendNum;
-                const futureDate = new Date();
-                futureDate.setDate(today.getDate() + Math.ceil(daysLeft));
-                
-                const fd = String(futureDate.getDate()).padStart(2, '0');
-                const fm = String(futureDate.getMonth() + 1).padStart(2, '0');
-                const fy = String(futureDate.getFullYear()).slice(-2);
-                
-                enoughUntilCell.textContent = `${fd}.${fm}.${fy}`;
-
-                if (daysLeft < 3) {
-                    enoughUntilCell.className = 'enough-until-cell danger-cell';
-                } else {
-                    enoughUntilCell.className = 'enough-until-cell good-cell';
-                }
-            }
-        }
+// 🔹 Обработчики событий
+function setupEventListeners() {
+  // Режим редактирования
+  document.getElementById('btn-edit-mode').onclick = () => {
+    editMode = !editMode;
+    renderTable();
+    if (editMode) showToast('✏️ Режим редактирования включен', 'warning');
+    else {
+      saveToStorage();
+      showToast('✅ Изменения сохранены', 'success');
     }
-
-    function calculateTotals() {
-        let totalUSD = 0, totalRUB = 0;
-        let spendUSD = 0, spendRUB = 0;
-        
-        balanceCells.forEach((cell) => {
-            const balText = cell.textContent.trim();
-            const balNum = parseFloat(balText.replace(/[^0-9,.\-]/g, '').replace(',', '.'));
-            if (!isNaN(balNum)) {
-                if (cell.dataset.currency === 'USD') totalUSD += balNum;
-                else totalRUB += balNum;
-            }
-            const row = cell.closest('tr');
-            const spendCell = row.querySelector('.spend-cell');
-            if (spendCell) {
-                const spendText = spendCell.textContent.trim();
-                const spendNum = parseFloat(spendText.replace(/[^0-9,.\-]/g, '').replace(',', '.'));
-                if (!isNaN(spendNum)) {
-                    if (cell.dataset.currency === 'USD') spendUSD += spendNum;
-                    else spendRUB += spendNum;
-                }
-            }
-        });
-        
-        const fmt = (n) => n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        totalCell.textContent = `$ ${fmt(totalUSD)} / ${fmt(totalRUB)} ₽`;
-        totalSpendCell.textContent = `$ ${fmt(spendUSD)} / ${fmt(spendRUB)} ₽`;
-    }
-
-    function updateActiveCount() {
-        let active = 0;
-        statusBtns.forEach(btn => { if (btn.dataset.status === 'Active') active++; });
-        activeCountCell.textContent = `${active}/${statusBtns.length}`;
-    }
-
-    balanceCells.forEach(cell => {
-        let initialValue = cell.textContent.trim();
-        cell.addEventListener('focus', function() { initialValue = this.textContent.trim(); });
-        cell.addEventListener('input', updateCalculatedColumns);
-        cell.addEventListener('blur', function() {
-            let raw = this.textContent.replace(/[^0-9,.\-]/g, '');
-            let normalized = raw.replace('.', ',');
-            if (!normalized || normalized === '-' || normalized === '') normalized = '0,00';
-            let parts = normalized.split(',');
-            if (parts[1]) parts[1] = parts[1].substring(0, 2).padEnd(2, '0'); else parts.push('00');
-            normalized = parts.join(',');
-            const symbol = this.dataset.currency === 'USD' ? '$' : '₽';
-            this.textContent = `${symbol}${normalized}`;
-            updateCalculatedColumns();
-        });
-        cell.addEventListener('paste', (e) => { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain')); });
-        cell.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } });
-    });
-
-    spendCells.forEach(cell => {
-        cell.addEventListener('input', updateCalculatedColumns);
-        cell.addEventListener('blur', function() {
-            let raw = this.textContent.replace(/[^0-9,.\-]/g, '');
-            let normalized = raw.replace('.', ',');
-            if (!normalized || normalized === '-' || normalized === '') normalized = '0,00';
-            let parts = normalized.split(',');
-            if (parts[1]) parts[1] = parts[1].substring(0, 2).padEnd(2, '0'); else parts.push('00');
-            normalized = parts.join(',');
-            const balanceCell = this.closest('tr').querySelector('.balance-cell');
-            const symbol = balanceCell?.dataset.currency === 'RUB' ? '₽' : '$';
-            this.textContent = `${symbol}${normalized}`;
-            updateCalculatedColumns();
-        });
-        cell.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } });
-    });
-
-    creditedCells.forEach(cell => {
-        let initialValue = cell.textContent.trim();
-        cell.addEventListener('focus', function() { initialValue = this.textContent.trim(); });
-        cell.addEventListener('blur', function() {
-            let raw = this.textContent.replace(/[^0-9,.\-]/g, '');
-            let normalized = raw.replace('.', ',');
-            let num = parseFloat(normalized.replace(',', '.'));
-            if (isNaN(num) || this.textContent.trim() === '') { this.textContent = '0'; } 
-            else {
-                let strNum = num.toString().replace('.', ',');
-                if (strNum.includes(',')) {
-                    let [intPart, decPart] = strNum.split(',');
-                    decPart = decPart.replace(/0+$/, '');
-                    this.textContent = decPart === '' ? intPart : `${intPart},${decPart}`;
-                } else { this.textContent = strNum; }
-            }
-            let oldNum = parseFloat(initialValue.replace(/[^0-9,.\-]/g, '').replace(',', '.')) || 0;
-            let newNum = parseFloat(this.textContent.replace(/[^0-9,.\-]/g, '').replace(',', '.')) || 0;
-            if (oldNum !== newNum) updateReplenishDate(this.closest('tr'));
-        });
-        cell.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } });
-    });
-
-    statusBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.dataset.status === 'Active') {
-                this.dataset.status = 'Pause';
-                this.className = 'status-btn paused';
-                this.textContent = '◐ Pause';
-            } else {
-                this.dataset.status = 'Active';
-                this.className = 'status-btn active';
-                this.textContent = '● Active';
-            }
-            updateActiveCount();
-        });
-    });
-
-    btnSave.addEventListener('click', () => {
-        const dataToSave = [];
-        balanceCells.forEach((cell, i) => {
-            const row = cell.closest('tr');
-            dataToSave.push({
-                balance: cell.textContent.trim(),
-                currency: cell.dataset.currency,
-                spend: row.querySelector('.spend-cell')?.textContent.trim() || '',
-                status: statusBtns[i].dataset.status,
-                credited: creditedCells[i]?.textContent.trim() || '',
-                replenishDate: row.querySelector('.replenish-cell')?.textContent || ''
-            });
-        });
-        localStorage.setItem('adBalancesDataV2', JSON.stringify(dataToSave));
-        const originalText = btnSave.textContent;
-        btnSave.textContent = "✅ Сохранено!";
-        setTimeout(() => { btnSave.textContent = originalText; }, 2000);
-    });
-
-    function loadData() {
-        const saved = localStorage.getItem('adBalancesDataV2');
-        if (saved) {
-            const data = JSON.parse(saved);
-            data.forEach((item, i) => {
-                if (balanceCells[i]) { balanceCells[i].textContent = item.balance; balanceCells[i].dataset.currency = item.currency; }
-                const row = balanceCells[i]?.closest('tr');
-                const spendCell = row?.querySelector('.spend-cell');
-                if (spendCell && item.spend) spendCell.textContent = item.spend;
-                if (statusBtns[i]) {
-                    statusBtns[i].dataset.status = item.status;
-                    if (item.status === 'Active') { statusBtns[i].className = 'status-btn active'; statusBtns[i].textContent = '● Active'; }
-                    else { statusBtns[i].className = 'status-btn paused'; statusBtns[i].textContent = '◐ Pause'; }
-                }
-                if (creditedCells[i] && item.credited) creditedCells[i].textContent = item.credited;
-                if (replenishCells[i] && item.replenishDate) replenishCells[i].textContent = item.replenishDate;
-            });
-        }
+  };
+  
+  // Добавить строку
+  document.getElementById('btn-add-row').onclick = () => {
+    openModal('modal-add');
+    // Сброс формы
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-balance').value = '0,00';
+    document.getElementById('new-spend').value = '0,00';
+    document.getElementById('new-currency').value = 'USD';
+    document.getElementById('new-status').value = 'Active';
+    document.getElementById('new-name').focus();
+  };
+  
+  // Сохранить
+  document.getElementById('btn-save').onclick = () => {
+    saveToStorage();
+    showToast('✅ Данные сохранены', 'success');
+  };
+  
+  // Сброс
+  document.getElementById('btn-reset').onclick = () => {
+    confirmAction(
+      '↺ Сбросить все данные?',
+      'Это вернёт таблицу к исходным значениям. Текущие изменения будут потеряны.',
+      () => {
+        localStorage.removeItem('adBalancesDataV3');
+        loadData();
+        renderTable();
         updateCalculatedColumns();
         updateActiveCount();
+        showToast('↺ Данные сброшены', 'warning');
+      }
+    );
+  };
+  
+  // Экспорт CSV
+  document.getElementById('btn-export').onclick = exportToCSV;
+  
+  // Закрытие модальных окон по клику вне
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.onclick = (e) => { if (e.target === modal) closeModal(modal.id); };
+  });
+  
+  // Enter в полях формы
+  document.getElementById('new-name').onkeydown = 
+  document.getElementById('new-balance').onkeydown = 
+  document.getElementById('new-spend').onkeydown = (e) => {
+    if (e.key === 'Enter') addNewRow();
+  };
+}
+
+// 🔹 Обработчики ячеек
+function attachCellHandlers() {
+  document.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+    let original = cell.textContent.trim();
+    
+    cell.onfocus = () => { original = cell.textContent.trim(); };
+    
+    cell.onblur = function() {
+      const field = this.dataset.field;
+      const rowIdx = Array.from(this.closest('tbody').children).indexOf(this.closest('tr'));
+      let value = this.textContent.trim();
+      
+      // Парсинг в зависимости от поля
+      if (['balance', 'spend'].includes(field)) {
+        const num = parseFloat(value.replace(/[^0-9,.\-]/g, '').replace(',', '.')) || 0;
+        window.currentData[rowIdx][field] = num;
+        const symbol = this.dataset.currency === 'USD' ? '$' : this.dataset.currency === 'RUB' ? '₽' : '€';
+        const fmt = (n) => Number(n).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        this.textContent = `${symbol}${fmt(num)}`;
+      } else if (field === 'credited') {
+        const num = parseFloat(value.replace(/[^0-9,.\-]/g, '').replace(',', '.')) || 0;
+        window.currentData[rowIdx][field] = num;
+        this.textContent = num % 1 === 0 ? String(num) : num.toString().replace('.', ',');
+      } else if (field === 'name') {
+        window.currentData[rowIdx][field] = value || 'Без названия';
+      } else if (field === 'replenish') {
+        window.currentData[rowIdx][field] = value;
+      }
+      
+      // Если меняли баланс или расход — пересчитываем
+      if (['balance', 'spend'].includes(field)) {
+        updateCalculatedColumns();
+        // Обновляем дату пополнения при изменении зачислено
+        if (field === 'credited' && original !== value) {
+          updateReplenishDate(rowIdx);
+        }
+      }
+    };
+    
+    cell.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } };
+    
+    cell.onpaste = (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      document.execCommand('insertText', false, text);
+    };
+  });
+}
+
+// 🔹 Обработчики кнопок статуса
+function attachStatusHandlers() {
+  document.querySelectorAll('.status-btn').forEach((btn, idx) => {
+    btn.onclick = function() {
+      if (!editMode) return;
+      const newStatus = this.dataset.status === 'Active' ? 'Pause' : 'Active';
+      this.dataset.status = newStatus;
+      this.className = `status-btn ${newStatus === 'Active' ? 'active' : 'paused'}`;
+      this.textContent = newStatus === 'Active' ? '● Active' : '◐ Pause';
+      window.currentData[idx].status = newStatus;
+      updateActiveCount();
+      saveToStorage();
+    };
+  });
+}
+
+// 🔹 Обновление даты пополнения
+function updateReplenishDate(idx) {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = String(now.getFullYear()).slice(-2);
+  const h = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  window.currentData[idx].replenish = `${d}.${m}.${y} ${h}:${min}`;
+  renderTable();
+}
+
+// 🔹 Удаление строки
+function deleteRow(idx) {
+  confirmAction(
+    '🗑 Удалить платформу?',
+    `Вы уверены, что хотите удалить "${window.currentData[idx].name}"?`,
+    () => {
+      window.currentData.splice(idx, 1);
+      saveToStorage();
+      renderTable();
+      updateCalculatedColumns();
+      updateActiveCount();
+      showToast('🗑 Строка удалена', 'success');
     }
+  );
+}
 
-    btnExport.addEventListener('click', () => {
-        let csvContent = "\uFEFF"; 
-        csvContent += "Источник;Баланс;Статус;Расход в день;6 дней;Хватит До;Зачислено;Последнее пополнение\n";
-        document.querySelectorAll('tbody tr').forEach(row => {
-            const cols = row.querySelectorAll('td');
-            let rowData = [];
-            cols.forEach(col => {
-                const btn = col.querySelector('.status-btn');
-                let val = btn ? btn.textContent.trim() : col.textContent.trim().replace(/;/g, ',');
-                rowData.push(val);
-            });
-            csvContent += rowData.join(";") + "\n";
-        });
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `balances_${dd}_${mm}_${yy}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    });
+// 🔹 Добавление новой строки
+function addNewRow() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) {
+    showToast('⚠ Введите название платформы', 'error');
+    document.getElementById('new-name').focus();
+    return;
+  }
+  
+  const parseNum = (val) => parseFloat(val.replace(',', '.')) || 0;
+  
+  const newItem = {
+    name: name,
+    currency: document.getElementById('new-currency').value,
+    balance: parseNum(document.getElementById('new-balance').value),
+    spend: parseNum(document.getElementById('new-spend').value),
+    status: document.getElementById('new-status').value,
+    credited: 0,
+    replenish: ''
+  };
+  
+  window.currentData.push(newItem);
+  saveToStorage();
+  closeModal('modal-add');
+  renderTable();
+  updateCalculatedColumns();
+  updateActiveCount();
+  showToast(`✅ Добавлено: ${name}`, 'success');
+}
 
-    loadData();
-});
+// 🔹 Сохранение в localStorage
+function saveToStorage() {
+  localStorage.setItem('adBalancesDataV3', JSON.stringify(window.currentData));
+}
+
+// 🔹 Экспорт в CSV
+function exportToCSV() {
+  let csv = '\uFEFFИсточник;Баланс;Валюта;Статус;Расход в день;6 дней;Хватит До;Зачислено;Последнее пополнение\n';
+  
+  window.currentData.forEach(item => {
+    const symbol = item.currency === 'USD' ? '$' : item.currency === 'RUB' ? '₽' : '€';
+    const fmt = (n) => Number(n).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const sixDays = item.spend * 6;
+    const enough = item.spend <= 0 ? '∞' : calcEnoughUntil(item.balance, item.spend);
+    
+    csv += `${item.name};${symbol}${fmt(item.balance)};${item.currency};${item.status};${symbol}${fmt(item.spend)};${symbol}${fmt(sixDays)};${enough};${item.credited};${item.replenish}\n`;
+  });
+  
+  // Итоги
+  let tUSD=0, tRUB=0, tEUR=0, sUSD=0, sRUB=0, sEUR=0;
+  window.currentData.forEach(i => {
+    if (i.currency==='USD') { tUSD+=i.balance; sUSD+=i.spend; }
+    else if (i.currency==='RUB') { tRUB+=i.balance; sRUB+=i.spend; }
+    else if (i.currency==='EUR') { tEUR+=i.balance; sEUR+=i.spend; }
+  });
+  const fmt = (n)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+  csv += `ИТОГО;;;$ ${fmt(tUSD)} / ${fmt(tRUB)} ₽ / € ${fmt(tEUR)};;$ ${fmt(sUSD)} / ${fmt(sRUB)} ₽ / € ${fmt(sEUR)};;;\n`;
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `balances_${dd}_${mm}_${yy}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📄 CSV экспортирован', 'success');
+}
+
+// 🔹 Модальные окна
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// 🔹 Подтверждение действия
+function confirmAction(title, message, onConfirm) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-yes').onclick = () => {
+    closeModal('modal-confirm');
+    onConfirm();
+  };
+  openModal('modal-confirm');
+}
+
+// 🔹 Уведомления
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠'}</span> ${message}`;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'slideIn 0.3s ease reverse';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
 </script>
 
 </body>
