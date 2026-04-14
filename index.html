@@ -33,6 +33,20 @@
     body { margin: 0; padding: 20px; background: #f5f7fa; font-family: Arial, sans-serif; overflow: hidden; }
     body.logged-in { overflow: auto; }
     
+    /* 🔹 АДАПТИВНАЯ ОБЁРТКА ТАБЛИЦ 🔹 */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .table-responsive table {
+      min-width: 900px; /* Минимальная ширина для сохранения читаемости */
+      width: 100%;
+    }
+    
     .status-btn {
       border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer;
       font-size: 13px; font-weight: bold; transition: all 0.2s; font-family: Arial, sans-serif;
@@ -44,7 +58,7 @@
     .danger-cell { color: #d9534f !important; }
     .good-cell { color: #5cb85c !important; }
     
-    .nav-tabs { max-width: 1300px; margin: 0 auto 15px; display: flex; gap: 10px; }
+    .nav-tabs { max-width: 1300px; margin: 0 auto 15px; display: flex; gap: 10px; flex-wrap: wrap; }
     .tab-btn {
       padding: 10px 20px; border: 2px solid #4472C4; background: #fff; color: #4472C4;
       border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-family: Arial, sans-serif; font-size: 14px; transition: 0.2s;
@@ -53,7 +67,6 @@
     .tab-btn:hover:not(.active) { background: #eef2ff; }
     .page-content { max-width: 1300px; margin: 0 auto 20px; animation: fadeIn 0.25s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: #fff; }
     
     .add-btn-wrap { max-width: 1300px; margin: 0 auto 10px; text-align: right; }
     .add-row-btn {
@@ -70,6 +83,22 @@
     .controls button { background-color: #4472C4; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; font-size: 14px; }
     .controls #btn-export { background-color: #28a745; }
     .controls button:hover { opacity: 0.9; }
+    
+    /* 🔹 МОБИЛЬНАЯ АДАПТАЦИЯ 🔹 */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .login-box { width: 90%; padding: 25px; }
+      .nav-tabs { justify-content: center; }
+      .tab-btn { flex: 1; min-width: 150px; text-align: center; }
+      .table-responsive table { min-width: 750px; } /* Чуть меньше для мобильных */
+      .controls { text-align: center; }
+      .controls button { margin: 5px; display: inline-block; }
+    }
+    
+    @media (max-width: 480px) {
+      .table-responsive table { min-width: 650px; } /* Ещё меньше для очень маленьких экранов */
+      .add-btn-wrap { text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -93,100 +122,104 @@
 
 <!-- 🔹 СТРАНИЦА 1: ОСНОВНЫЕ ПЛАТФОРМЫ 🔹 -->
 <div id="page-main" class="page-content">
-  <table border="1" id="table-main">
-  <thead>
-  <tr style="background-color:#4472C4; color:white;">
-  <th colspan="9" style="padding: 15px; text-align: center; font-size: 16px;">БАЛАНСЫ РЕКЛАМНЫХ ПЛАТФОРМ НА <span id="header-date"></span></th>
-  </tr>
-  <tr style="background-color:#D6DCE4;">
-  <th style="padding: 10px; text-align: left;">Источник</th>
-  <th style="padding: 10px; text-align: right;">Баланс</th>
-  <th style="padding: 10px; text-align: center;">Статус</th>
-  <th style="padding: 10px; text-align: right;">Расход в день</th>
-  <th style="padding: 10px; text-align: right;">6 дней</th>
-  <th style="padding: 10px; text-align: center;">Хватит До</th>
-  <th style="padding: 10px; text-align: right;">Зачислено</th>
-  <th style="padding: 10px; text-align: center;">Последнее пополнение</th>
-  <th style="padding: 10px; text-align: center; width: 60px;">⚙️</th>
-  </tr>
-  </thead>
-  <tbody>
-  <tr class="data-row" data-platform="Adcash"><td style="padding: 8px 15px;">Adcash</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$76,96</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$12,50</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$75,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">19.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:32</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="Buymedia"><td style="padding: 8px 15px;">Buymedia</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$230,51</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$45,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$270,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">18.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 13:45</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="Clickadilla"><td style="padding: 8px 15px;">Clickadilla</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$80,37</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$18,20</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$109,20</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 12:18</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="Clickaine"><td style="padding: 8px 15px;">Clickaine</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;"></td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="ExoClick"><td style="padding: 8px 15px;">ExoClick</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$22,63</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$8,50</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$51,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">15.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 10:15</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="Hilltopads"><td style="padding: 8px 15px;">Hilltopads</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$297,47</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$62,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$372,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:01</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="Kadam"><td style="padding: 8px 15px;">Kadam</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$109,95</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$25,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$150,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 11:22</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="MyBid"><td style="padding: 8px 15px;">MyBid</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$409,00</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$85,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$510,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:30</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="Targeleon"><td style="padding: 8px 15px;">Targeleon</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$39,21</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">12.04.25 18:43</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="Traforama"><td style="padding: 8px 15px;">Traforama</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$10,80</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">11.04.25 09:12</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="VisitWeb"><td style="padding: 8px 15px;">VisitWeb</td><td class="balance-cell" contenteditable="true" data-currency="RUB" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">2 381,31 ₽</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">450,00 ₽</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">2 700,00 ₽</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">18.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:35</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
-  <tr class="data-row" data-platform="ZeroPark"><td style="padding: 8px 15px;">ZeroPark</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$298,58</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$55,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$330,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">19.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:28</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+  <div class="table-responsive">
+    <table border="1" id="table-main">
+    <thead>
+    <tr style="background-color:#4472C4; color:white;">
+    <th colspan="9" style="padding: 15px; text-align: center; font-size: 16px;">БАЛАНСЫ РЕКЛАМНЫХ ПЛАТФОРМ НА <span id="header-date"></span></th>
+    </tr>
+    <tr style="background-color:#D6DCE4;">
+    <th style="padding: 10px; text-align: left;">Источник</th>
+    <th style="padding: 10px; text-align: right;">Баланс</th>
+    <th style="padding: 10px; text-align: center;">Статус</th>
+    <th style="padding: 10px; text-align: right;">Расход в день</th>
+    <th style="padding: 10px; text-align: right;">6 дней</th>
+    <th style="padding: 10px; text-align: center;">Хватит До</th>
+    <th style="padding: 10px; text-align: right;">Зачислено</th>
+    <th style="padding: 10px; text-align: center;">Последнее пополнение</th>
+    <th style="padding: 10px; text-align: center; width: 60px;">⚙️</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr class="data-row" data-platform="Adcash"><td style="padding: 8px 15px;">Adcash</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$76,96</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$12,50</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$75,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">19.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:32</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="Buymedia"><td style="padding: 8px 15px;">Buymedia</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$230,51</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$45,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$270,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">18.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 13:45</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="Clickadilla"><td style="padding: 8px 15px;">Clickadilla</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$80,37</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$18,20</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$109,20</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 12:18</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="Clickaine"><td style="padding: 8px 15px;">Clickaine</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;"></td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="ExoClick"><td style="padding: 8px 15px;">ExoClick</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$22,63</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$8,50</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$51,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">15.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 10:15</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="Hilltopads"><td style="padding: 8px 15px;">Hilltopads</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$297,47</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$62,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$372,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:01</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="Kadam"><td style="padding: 8px 15px;">Kadam</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$109,95</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$25,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$150,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 11:22</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="MyBid"><td style="padding: 8px 15px;">MyBid</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$409,00</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$85,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$510,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">17.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:30</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="Targeleon"><td style="padding: 8px 15px;">Targeleon</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$39,21</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">12.04.25 18:43</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="Traforama"><td style="padding: 8px 15px;">Traforama</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$10,80</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$0,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$0,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">11.04.25 09:12</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="VisitWeb"><td style="padding: 8px 15px;">VisitWeb</td><td class="balance-cell" contenteditable="true" data-currency="RUB" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">2 381,31 ₽</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">450,00 ₽</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">2 700,00 ₽</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">18.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:35</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
+    <tr class="data-row" data-platform="ZeroPark"><td style="padding: 8px 15px;">ZeroPark</td><td class="balance-cell" contenteditable="true" data-currency="USD" style="padding: 8px 15px; text-align: right; cursor: text;">$298,58</td><td style="padding: 8px 15px; text-align: center;"><button class="status-btn active" data-status="Active">● Active</button></td><td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">$55,00</td><td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">$330,00</td><td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">19.04.25</td><td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td><td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;">13.04.25 14:28</td><td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td></tr>
 
-  <!-- ИТОГО ОСНОВНЫЕ -->
-  <tr class="total-row" style="background-color:#4472C4; color:white; font-weight:bold; font-size:14px;">
-  <td style="padding: 12px 15px; text-align: right;">ИТОГО ПО ВСЕМ КАТЕГОРИЯМ</td>
-  <td id="total-balance" style="padding: 12px 15px; text-align: right;"></td>
-  <td id="active-count" style="padding: 12px 15px; text-align: center;"></td>
-  <td id="total-spend" style="padding: 12px 15px; text-align: right;"></td>
-  <td style="padding: 12px 15px; text-align: right;"></td>
-  <td style="padding: 12px 15px; text-align: center;"></td>
-  <td style="padding: 12px 15px; text-align: right;"></td>
-  <td></td>
-  <td></td>
-  </tr>
-  </tbody>
-  </table>
+    <!-- ИТОГО ОСНОВНЫЕ -->
+    <tr class="total-row" style="background-color:#4472C4; color:white; font-weight:bold; font-size:14px;">
+    <td style="padding: 12px 15px; text-align: right;">ИТОГО ПО ВСЕМ КАТЕГОРИЯМ</td>
+    <td id="total-balance" style="padding: 12px 15px; text-align: right;"></td>
+    <td id="active-count" style="padding: 12px 15px; text-align: center;"></td>
+    <td id="total-spend" style="padding: 12px 15px; text-align: right;"></td>
+    <td style="padding: 12px 15px; text-align: right;"></td>
+    <td style="padding: 12px 15px; text-align: center;"></td>
+    <td style="padding: 12px 15px; text-align: right;"></td>
+    <td></td>
+    <td></td>
+    </tr>
+    </tbody>
+    </table>
+  </div>
   <div class="add-btn-wrap"><button class="add-row-btn" data-table="table-main">➕ Добавить платформу</button></div>
 </div>
 
 <!-- 🔹 СТРАНИЦА 2: VK ADS 🔹 -->
 <div id="page-vk" class="page-content" style="display:none;">
-  <table border="1" id="table-vk">
-  <thead>
-  <tr style="background-color:#4472C4; color:white;">
-  <th colspan="9" style="padding: 15px; text-align: center; font-size: 16px;">VK ADS / VK REKLAMA</th>
-  </tr>
-  <tr style="background-color:#D6DCE4;">
-  <th style="padding: 10px; text-align: left;">Источник</th>
-  <th style="padding: 10px; text-align: right;">Баланс</th>
-  <th style="padding: 10px; text-align: center;">Статус</th>
-  <th style="padding: 10px; text-align: right;">Расход в день</th>
-  <th style="padding: 10px; text-align: right;">6 дней</th>
-  <th style="padding: 10px; text-align: center;">Хватит До</th>
-  <th style="padding: 10px; text-align: right;">Зачислено</th>
-  <th style="padding: 10px; text-align: center;">Последнее пополнение</th>
-  <th style="padding: 10px; text-align: center; width: 60px;">⚙️</th>
-  </tr>
-  </thead>
-  <tbody>
-  <tr class="data-row" data-platform="VK">
-  <td style="padding: 8px 15px;">VK</td>
-  <td class="balance-cell" contenteditable="true" data-currency="RUB" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">0,00 ₽</td>
-  <td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td>
-  <td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">0,00 ₽</td>
-  <td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">0,00 ₽</td>
-  <td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td>
-  <td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
-  <td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;"></td>
-  <td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td>
-  </tr>
+  <div class="table-responsive">
+    <table border="1" id="table-vk">
+    <thead>
+    <tr style="background-color:#4472C4; color:white;">
+    <th colspan="9" style="padding: 15px; text-align: center; font-size: 16px;">VK ADS / VK REKLAMA</th>
+    </tr>
+    <tr style="background-color:#D6DCE4;">
+    <th style="padding: 10px; text-align: left;">Источник</th>
+    <th style="padding: 10px; text-align: right;">Баланс</th>
+    <th style="padding: 10px; text-align: center;">Статус</th>
+    <th style="padding: 10px; text-align: right;">Расход в день</th>
+    <th style="padding: 10px; text-align: right;">6 дней</th>
+    <th style="padding: 10px; text-align: center;">Хватит До</th>
+    <th style="padding: 10px; text-align: right;">Зачислено</th>
+    <th style="padding: 10px; text-align: center;">Последнее пополнение</th>
+    <th style="padding: 10px; text-align: center; width: 60px;">⚙️</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr class="data-row" data-platform="VK">
+    <td style="padding: 8px 15px;">VK</td>
+    <td class="balance-cell" contenteditable="true" data-currency="RUB" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">0,00 ₽</td>
+    <td style="padding: 8px 15px; text-align: center;"><button class="status-btn paused" data-status="Pause">◐ Pause</button></td>
+    <td class="spend-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text; font-weight:bold;">0,00 ₽</td>
+    <td class="six-days-cell" style="padding: 8px 15px; text-align: right; font-weight:bold;">0,00 ₽</td>
+    <td class="enough-until-cell" style="padding: 8px 15px; text-align: center; font-weight:bold;">∞</td>
+    <td class="credited-cell" contenteditable="true" style="padding: 8px 15px; text-align: right; cursor: text;">0</td>
+    <td class="replenish-cell" contenteditable="true" style="padding: 8px 15px; text-align: center; color: #666; cursor: text;"></td>
+    <td style="padding: 8px 15px; text-align: center;"><button class="delete-row-btn" title="Удалить">✕</button></td>
+    </tr>
 
-  <!-- ИТОГО VK (добавлены id="vk-total-balance" и id="vk-total-spend") -->
-  <tr class="total-row" style="background-color:#4472C4; color:white; font-weight:bold; font-size:14px;">
-  <td style="padding: 12px 15px; text-align: right;">ИТОГО VK</td>
-  <td id="vk-total-balance" style="padding: 12px 15px; text-align: right;"></td>
-  <td style="padding: 12px 15px; text-align: center;"></td>
-  <td id="vk-total-spend" style="padding: 12px 15px; text-align: right;"></td>
-  <td style="padding: 12px 15px; text-align: right;"></td>
-  <td style="padding: 12px 15px; text-align: center;"></td>
-  <td style="padding: 12px 15px; text-align: right;"></td>
-  <td></td>
-  <td></td>
-  </tr>
-  </tbody>
-  </table>
+    <!-- ИТОГО VK -->
+    <tr class="total-row" style="background-color:#4472C4; color:white; font-weight:bold; font-size:14px;">
+    <td style="padding: 12px 15px; text-align: right;">ИТОГО VK</td>
+    <td id="vk-total-balance" style="padding: 12px 15px; text-align: right;"></td>
+    <td style="padding: 12px 15px; text-align: center;"></td>
+    <td id="vk-total-spend" style="padding: 12px 15px; text-align: right;"></td>
+    <td style="padding: 12px 15px; text-align: right;"></td>
+    <td style="padding: 12px 15px; text-align: center;"></td>
+    <td style="padding: 12px 15px; text-align: right;"></td>
+    <td></td>
+    <td></td>
+    </tr>
+    </tbody>
+    </table>
+  </div>
   <div class="add-btn-wrap"><button class="add-row-btn" data-table="table-vk">➕ Добавить аккаунт VK</button></div>
 </div>
 
@@ -271,7 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 🔹 ИСПРАВЛЕННЫЙ РАСЧЁТ ИТОГОВ (по каждой таблице отдельно)
     function calculateTableTotals(tableId, balanceId, spendId) {
         const table = document.getElementById(tableId);
         if (!table) return;
@@ -319,7 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 untilCell.className = daysLeft < 3 ? 'enough-until-cell danger-cell' : 'enough-until-cell good-cell';
             }
         }
-        // Обновляем итоги для обеих таблиц
         calculateTableTotals('table-main', 'total-balance', 'total-spend');
         calculateTableTotals('table-vk', 'vk-total-balance', 'vk-total-spend');
     }
