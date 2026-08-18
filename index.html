@@ -6,6 +6,40 @@
     <title>Финансовый Дашборд</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <style>
+        <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc, setDoc } 
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ==================== НАСТРОЙКА FIREBASE ====================
+        // ЗАМЕНИТЕ ЭТОТ БЛОК НА ВАШИ ДАННЫЕ ИЗ КОНСОЛИ FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDafCAtqSXxmaT4bEifkiwRp3rmYJGKk-I",
+            authDomain: "control-balance-rekl.firebaseapp.com",
+            projectId: "control-balance-rekl",
+            storageBucket: "control-balance-rekl.firebasestorage.app",
+            messagingSenderId: "113028326593",
+            appId: "1:113028326593:web:b629da68f34beeea14e040"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Делаем переменные доступными глобально
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.onSnapshot = onSnapshot;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.updateDoc = updateDoc;
+        window.setDoc = setDoc;
+
+        console.log("Firebase initialized");
+    </script>
         * {
             margin: 0;
             padding: 0;
