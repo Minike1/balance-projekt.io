@@ -511,5 +511,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+  <!-- Подключение Firebase SDK (модульная версия SDK v9+) -->
+<script type="module">
+  // Импорт нужных модулей (например, app и firestore/auth)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  // import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Ваши данные из Firebase Console
+  const firebaseConfig = {
+    apiKey: "AIzaSyDafCAtqSXxmaT4bEifkiwRp3rmYJGKk-I",
+    authDomain: "control-balance-rekl.firebaseapp.com",
+    projectId: "control-balance-rekl",
+    storageBucket: "control-balance-rekl.firebasestorage.app",
+    messagingSenderId: "113028326593",
+    appId: "1:113028326593:web:b629da68f34beeea14e040"
+  };
+
+  // Инициализация Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
 </body>
 </html>
