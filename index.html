@@ -510,14 +510,11 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     });
 });
-</script>
-  <!-- Подключение Firebase SDK (модульная версия SDK v9+) -->
-<script type="module">
-  // Импорт нужных модулей (например, app и firestore/auth)
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  // import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<!-- Дополнительные сервисы, например Auth или Firestore -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  // Ваши данные из Firebase Console
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyDafCAtqSXxmaT4bEifkiwRp3rmYJGKk-I",
     authDomain: "control-balance-rekl.firebaseapp.com",
@@ -527,8 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     appId: "1:113028326593:web:b629da68f34beeea14e040"
   };
 
-  // Инициализация Firebase
-  const app = initializeApp(firebaseConfig);
+  firebase.initializeApp(firebaseConfig);
 </script>
 </body>
 </html>
