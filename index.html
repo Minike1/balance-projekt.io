@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Балансы рекламных платформ</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    min-height: 100vh;
+    color: #e2e8f0;
+    padding: 20px;
+  }
+  
+  .container { max-width: 1400px; margin: 0 auto; }
+  
+  /* Индикатор Firebase */
+  .firebase-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(30,41,59,0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+  }
+  
+  .firebase-indicator .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #64748b;
+    transition: all 0.3s;
+  }
+  
+  .firebase-indicator.connected { border-color: rgba(74,222,128,0.3); }
+  .firebase-indicator.connected .dot { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+  .firebase-indicator.connected .label { color: #4ade80; }
+  
+  .firebase-indicator.error { border-color: rgba(239,68,68,0.3); }
+  .firebase-indicator.error .dot { background: #f87171; box-shadow: 0 0 8px #f87171; }
+  .firebase-indicator.error .label { color: #f87171; }
+  
+  .firebase-indicator.syncing .dot {
+    background: #60a5fa;
+    box-shadow: 0 0 8px #60a5fa;
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  
+  .firebase-indicator .label { font-weight: 500; }
+  .firebase-indicator .time { color: #64748b; font-size: 0.75rem; margin-left: 4px; }
+  
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+    margin-top: 50px;
+  }
+  
+  .stat-card {
+    background: rgba(30,41,59,0.6);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s;
+  }
+  
+  .stat-card:hover { transform: translateY(-3px); border-color: rgba(96,165,250,0.3); }
+  .stat-card .label { color: #94a3b8; font-size: 0.85rem; margin-bottom: 6px; }
+  .stat-card .value { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; }
+  .stat-card .value.green { color: #4ade80; }
+  .stat-card .value.yellow { color: #fbbf24; }
+  .stat-card .value.blue { color: #60a5fa; }
+  
+  .section {
+    background: rgba(30,41,59,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .section-header.right-only {
+    justify-content: flex-end;
+  }
+  
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .badge {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .table-wrapper { overflow-x: auto; border-radius: 12px; }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(15,23,42,0.5);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  thead {
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+  }
+  
+  th {
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  
+  td {
+    padding: 14px 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: rgba(59,130,246,0.08); }
+  
+  tbody tr.drag-over {
+    background: rgba(139,92,246,0.25) !important;
+    border-top: 2px solid #8b5cf6;
+  }
+  tbody tr.dragging-row { opacity: 0.4; }
+  
+  .drag-handle {
+    color: #64748b;
+    cursor: grab;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 1rem;
+    user-select: none;
+    display: inline-block;
+    margin-right: 4px;
+  }
+  
+  .platform-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+  
+  .platform-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: white;
+    flex-shrink: 0;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  
+  .platform-logo:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(255,255,255,0.2);
+  }
+  
+  .platform-logo.dragging {
+    opacity: 0.5;
+    transform: scale(1.15);
+    box-shadow: 0 0 20px rgba(139,92,246,0.6);
+  }
+  
+  .status-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  
+  .status-toggle:hover { transform: scale(1.05); }
+  
+  .status-toggle.active {
+    background: rgba(74,222,128,0.15);
+    color: #4ade80;
+    border-color: rgba(74,222,128,0.3);
+  }
+  
+  .status-toggle.active:hover { background: rgba(74,222,128,0.25); }
+  
+  .status-toggle.pause {
+    background: rgba(251,191,36,0.15);
+    color: #fbbf24;
+    border-color: rgba(251,191,36,0.3);
+  }
+  
+  .status-toggle.pause:hover { background: rgba(251,191,36,0.25); }
+  
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  
+  .status-toggle.active .status-dot {
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+  }
+  
+  .status-toggle.pause .status-dot {
+    background: #fbbf24;
+    box-shadow: 0 0 8px #fbbf24;
+  }
+  
+  .money { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .money.positive { color: #4ade80; }
+  .money.neutral { color: #cbd5e1; }
+  
+  .editable {
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background 0.15s;
+    position: relative;
+    display: inline-block;
+    min-width: 60px;
+  }
+  .editable:hover { background: rgba(59,130,246,0.15); }
+  .editable::after {
+    content: '✎';
+    position: absolute;
+    right: -18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: #64748b;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .editable:hover::after { opacity: 1; }
+  
+  .edit-input {
+    background: rgba(15,23,42,0.9);
+    border: 2px solid #3b82f6;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    width: 110px;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+  }
+  
+  .progress-bar {
+    width: 80px;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+  }
+  
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59,130,246,0.3); }
+  
+  .btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: #e2e8f0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+  
+  .btn-firebase {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+  }
+  .btn-firebase:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(255,152,0,0.3); }
+  
+  .actions-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    align-items: center;
+  }
+  
+  .delete-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 1rem;
+  }
+  .delete-btn:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+  
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  
+  .modal {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .modal h2 { margin-bottom: 20px; font-size: 1.3rem; }
+  
+  .form-group { margin-bottom: 15px; }
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(15,23,42,0.6);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+  
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+  
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid rgba(74,222,128,0.3);
+    padding: 14px 22px;
+    border-radius: 12px;
+    color: #4ade80;
+    font-weight: 500;
+    transform: translateX(400px);
+    transition: transform 0.3s;
+    z-index: 2000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.error { border-color: rgba(239,68,68,0.3); color: #f87171; }
+  .toast.info { border-color: rgba(96,165,250,0.3); color: #60a5fa; }
+  
+  @media (max-width: 768px) {
+    th, td { padding: 10px 8px; font-size: 0.8rem; }
+    .section { padding: 15px; }
+    .firebase-indicator { top: 10px; right: 10px; font-size: 0.7rem; padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Индикатор Firebase -->
+<div class="firebase-indicator" id="firebaseIndicator">
+  <div class="dot"></div>
+  <span class="label" id="firebaseLabel">Firebase: подключение...</span>
+  <span class="time" id="firebaseTime"></span>
+</div>
+
+<div class="container">
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- Основные платформы -->
+  <div class="section">
+    <div class="section-header right-only">
+      <button class="btn btn-primary" onclick="openModal('main')">➕ Добавить платформу</button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Источник</th>
+            <th>Баланс</th>
+            <th>Статус</th>
+            <th>Расход/день</th>
+            <th>6 дней</th>
+            <th>Хватит до</th>
+            <th>Зачислено</th>
+            <th>Последнее пополнение</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="mainTable"></tbody>
+      </table>
+    </div>
+    <div class="actions-bar">
+      <button class="btn btn-secondary" onclick="exportCSV('main')">📄 Экспорт в CSV</button>
+      <button class="btn btn-firebase" onclick="saveToFirebase()" id="btnSaveFb">💾 Сохранить в Firebase</button>
+      <button class="btn btn-secondary" onclick="loadFromFirebase()" id="btnLoadFb"> Загрузить из Firebase</button>
+      <button class="btn btn-secondary" id="offlineBtn" onclick="toggleOffline()">⚡ Офлайн</button>
+    </div>
+  </div>
+
+  <!-- VK ADS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+         VK ADS / VK REKLAMA <span class="badge" id="vkCount">0</span>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('vk')">➕ Добавить аккаунт VK</button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Источник</th>
+            <th>Баланс</th>
+            <th>Статус</th>
+            <th>Расход/день</th>
+            <th>6 дней</th>
+            <th>Хватит до</th>
+            <th>Зачислено</th>
+            <th>Последнее пополнение</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="vkTable"></tbody>
+      </table>
+    </div>
+    <div class="actions-bar">
+      <button class="btn btn-secondary" onclick="exportCSV('vk')">📄 Экспорт в CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Добавить платформу</h2>
+    <form id="platformForm">
+      <div class="form-group">
+        <label>Название платформы</label>
+        <input type="text" id="f_name" required placeholder="Например: Adcash">
+      </div>
+      <div class="form-group">
+        <label>Баланс</label>
+        <input type="number" id="f_balance" step="0.01" required placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Валюта</label>
+        <select id="f_currency">
+          <option value="$">$ USD</option>
+          <option value="₽">₽ RUB</option>
+          <option value="€">€ EUR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Статус</label>
+        <select id="f_status">
+          <option value="Active">● Active</option>
+          <option value="Pause">◐ Pause</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Расход в день</label>
+        <input type="number" id="f_daily" step="0.01" value="0">
+      </div>
+      <div class="form-group">
+        <label>Зачислено</label>
+        <input type="number" id="f_credited" step="0.01" value="0">
+      </div>
+      <div class="form-group">
+        <label>Последнее пополнение</label>
+        <input type="datetime-local" id="f_lastTopup">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================
+  // 🔥 FIREBASE КОНФИГУРАЦИЯ
+  // ============================================
+  // ЗАМЕНИТЕ ЭТИ ЗНАЧЕНИЯ НА ДАННЫЕ ИЗ ВАШЕГО FIREBASE ПРОЕКТА
+  // Инструкция: console.firebase.google.com → Ваш проект → Project settings → Your apps → Web app
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  // ============================================
+  // ИНИЦИАЛИЗАЦИЯ FIREBASE
+  // ============================================
+  let db = null;
+  let fbInitialized = false;
+  let fbUnsubscribe = null;
+  let isOffline = false;
+  let lastSyncTime = null;
+
+  const indicator = document.getElementById('firebaseIndicator');
+  const fbLabel = document.getElementById('firebaseLabel');
+  const fbTime = document.getElementById('firebaseTime');
+
+  function setFbStatus(status, text) {
+    indicator.className = 'firebase-indicator ' + status;
+    fbLabel.textContent = text;
+  }
+
+  function updateSyncTime() {
+    if (!lastSyncTime) { fbTime.textContent = ''; return; }
+    const now = new Date();
+    const diff = Math.floor((now - lastSyncTime) / 1000);
+    if (diff < 60) fbTime.textContent = `${diff}с назад`;
+    else if (diff < 3600) fbTime.textContent = `${Math.floor(diff/60)}м назад`;
+    else fbTime.textContent = lastSyncTime.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  try {
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      fbInitialized = true;
+      setFbStatus('connected', 'Firebase: подключено');
+      console.log('✅ Firebase инициализирован');
+      
+      // Запускаем realtime-синхронизацию
+      startRealtimeSync();
+      
+      // Обновляем таймер каждую секунду
+      setInterval(updateSyncTime, 1000);
+    } else {
+      setFbStatus('error', 'Firebase: не настроен');
+      console.warn('️ Firebase не настроен. Замените firebaseConfig на данные вашего проекта.');
+    }
+  } catch (error) {
+    setFbStatus('error', 'Firebase: ошибка');
+    console.error('❌ Ошибка инициализации Firebase:', error);
+  }
+
+  // ============================================
+  // REALTIME СИНХРОНИЗАЦИЯ
+  // ============================================
+  function startRealtimeSync() {
+    if (!fbInitialized) return;
+
+    // Отписываемся от предыдущего listener если есть
+    if (fbUnsubscribe) fbUnsubscribe();
+
+    fbUnsubscribe = db.collection('adPlatforms').doc('shared')
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          const docData = doc.data();
+          if (docData.data) {
+            // Проверяем, есть ли изменения
+            const currentStr = JSON.stringify(data);
+            const remoteStr = JSON.stringify(docData.data);
+            
+            if (currentStr !== remoteStr && !isOffline) {
+              console.log('🔄 Получены изменения из Firebase');
+              data = docData.data;
+              saveLocal();
+              render();
+              lastSyncTime = new Date();
+              updateSyncTime();
+              setFbStatus('connected', 'Firebase: синхронизировано');
+              showToast('Данные обновлены из облака', 'info');
+            } else {
+              setFbStatus('connected', 'Firebase: подключено');
+            }
+          }
+        } else {
+          console.log('📭 Документ в Firebase не найден, создаём...');
+          saveToFirebase();
+        }
+      }, (error) => {
+        console.error(' Ошибка realtime-синхронизации:', error);
+        setFbStatus('error', 'Firebase: ошибка');
+        showToast('Ошибка синхронизации: ' + error.message, 'error');
+      });
+  }
+
+  // ============================================
+  // СОХРАНЕНИЕ В FIREBASE
+  // ============================================
+  async function saveToFirebase() {
+    if (!fbInitialized) {
+      showToast('Firebase не настроен. Замените firebaseConfig в коде.', 'error');
+      return;
+    }
+    if (isOffline) {
+      showToast('Офлайн-режим. Включите онлайн для сохранения.', 'error');
+      return;
+    }
+
+    setFbStatus('syncing', 'Firebase: сохранение...');
+    showToast('Сохранение в облако...', 'info');
+
+    try {
+      const payload = {
+        data: data,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        version: '2.0'
+      };
+
+      await db.collection('adPlatforms').doc('shared').set(payload, { merge: true });
+      
+      saveLocal();
+      lastSyncTime = new Date();
+      updateSyncTime();
+      setFbStatus('connected', 'Firebase: сохранено');
+      showToast('✅ Данные сохранены в облако');
+      console.log('💾 Сохранено в Firebase:', payload);
+    } catch (error) {
+      console.error('❌ Ошибка сохранения:', error);
+      setFbStatus('error', 'Firebase: ошибка');
+      showToast('Ошибка сохранения: ' + error.message, 'error');
+    }
+  }
+
+  // ============================================
+  // ЗАГРУЗКА ИЗ FIREBASE
+  // ============================================
+  async function loadFromFirebase() {
+    if (!fbInitialized) {
+      showToast('Firebase не настроен.', 'error');
+      return;
+    }
+    if (isOffline) {
+      showToast('Офлайн-режим.', 'error');
+      return;
+    }
+
+    setFbStatus('syncing', 'Firebase: загрузка...');
+    showToast('Загрузка из облака...', 'info');
+
+    try {
+      const doc = await db.collection('adPlatforms').doc('shared').get();
+      
+      if (doc.exists) {
+        const docData = doc.data();
+        if (docData.data) {
+          data = docData.data;
+          saveLocal();
+          render();
+          lastSyncTime = new Date();
+          updateSyncTime();
+          setFbStatus('connected', 'Firebase: загружено');
+          showToast('✅ Данные загружены из облака');
+          console.log('📥 Загружено из Firebase:', docData);
+        } else {
+          showToast('Документ пуст', 'error');
+        }
+      } else {
+        showToast('Документ не найден. Сначала сохраните данные.', 'error');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка загрузки:', error);
+      setFbStatus('error', 'Firebase: ошибка');
+      showToast('Ошибка загрузки: ' + error.message, 'error');
+    }
+  }
+
+  // ============================================
+  // ДАННЫЕ ПРИЛОЖЕНИЯ
+  // ============================================
+  const platformColors = {
+    'Adcash': '#e11d48', 'Buymedia': '#7c3aed', 'Clickadilla': '#0891b2',
+    'Clickaine': '#059669', 'ExoClick': '#dc2626', 'Hilltopads': '#ea580c',
+    'Kadam': '#2563eb', 'MyBid': '#9333ea', 'Targeleon': '#0d9488',
+    'Traforama': '#ca8a04', 'VisitWeb': '#16a34a', 'ZeroPark': '#4f46e5',
+    'VK': '#0077ff'
+  };
+
+  let data = {
+    main: [
+      {name:'Adcash', balance:76.96, currency:'$', status:'Active', daily:12.50, credited:0, lastTopup:'13.04.25 14:32'},
+      {name:'Buymedia', balance:230.51, currency:'$', status:'Active', daily:45.00, credited:0, lastTopup:'13.04.25 13:45'},
+      {name:'Clickadilla', balance:80.37, currency:'$', status:'Active', daily:18.20, credited:0, lastTopup:'13.04.25 12:18'},
+      {name:'Clickaine', balance:0.00, currency:'$', status:'Pause', daily:0, credited:0, lastTopup:''},
+      {name:'ExoClick', balance:22.63, currency:'$', status:'Active', daily:8.50, credited:0, lastTopup:'13.04.25 10:15'},
+      {name:'Hilltopads', balance:297.47, currency:'$', status:'Active', daily:62.00, credited:0, lastTopup:'13.04.25 14:01'},
+      {name:'Kadam', balance:109.95, currency:'$', status:'Active', daily:25.00, credited:0, lastTopup:'13.04.25 11:22'},
+      {name:'MyBid', balance:409.00, currency:'$', status:'Active', daily:85.00, credited:0, lastTopup:'13.04.25 14:30'},
+      {name:'Targeleon', balance:39.21, currency:'$', status:'Pause', daily:0, credited:0, lastTopup:'12.04.25 18:43'},
+      {name:'Traforama', balance:10.80, currency:'$', status:'Pause', daily:0, credited:0, lastTopup:'11.04.25 09:12'},
+      {name:'VisitWeb', balance:2381.31, currency:'₽', status:'Active', daily:450.00, credited:0, lastTopup:'13.04.25 14:35'},
+      {name:'ZeroPark', balance:298.58, currency:'$', status:'Active', daily:55.00, credited:0, lastTopup:'13.04.25 14:28'}
+    ],
+    vk: [
+      {name:'VK', balance:0.00, currency:'₽', status:'Pause', daily:0, credited:0, lastTopup:''}
+    ]
+  };
+
+  let currentSection = 'main';
+
+  const saved = localStorage.getItem('adDashData');
+  if (saved) {
+    try { data = JSON.parse(saved); } catch(e) {}
+  }
+
+  function formatCurrentDateTime() {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yy = String(now.getFullYear()).slice(-2);
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    return `${dd}.${mm}.${yy} ${hh}:${min}`;
+  }
+
+  function formatMoney(amount, currency) {
+    const formatted = amount.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    return currency === '$' ? `$${formatted}` : `${formatted} ${currency}`;
+  }
+
+  function calcDaysLeft(balance, daily) {
+    if (daily <= 0) return {days: '∞', sixDay: '0,00'};
+    const days = balance / daily;
+    const sixDay = Math.min(days, 6) * daily;
+    return {
+      days: days >= 365 ? '∞' : days.toFixed(0) + ' дн.',
+      sixDay: sixDay.toFixed(2)
+    };
+  }
+
+  function calcDate(balance, daily) {
+    if (daily <= 0) return '∞';
+    const days = Math.floor(balance / daily);
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'2-digit'});
+  }
+
+  function getInitials(name) {
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  function renderStats() {
+    const all = [...data.main, ...data.vk];
+    const active = all.filter(p => p.status === 'Active');
+    const totalBalanceUSD = all.filter(p => p.currency === '$').reduce((s,p) => s + p.balance, 0);
+    const totalBalanceRUB = all.filter(p => p.currency === '₽').reduce((s,p) => s + p.balance, 0);
+    const totalDaily = active.filter(p => p.currency === '$').reduce((s,p) => s + p.daily, 0);
+
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat-card">
+        <div class="label">Всего платформ</div>
+        <div class="value blue">${all.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Активных</div>
+        <div class="value green">${active.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Баланс USD</div>
+        <div class="value">$${totalBalanceUSD.toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Баланс RUB</div>
+        <div class="value yellow">${totalBalanceRUB.toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2})} ₽</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Расход/день USD</div>
+        <div class="value">$${totalDaily.toFixed(2)}</div>
+      </div>
+    `;
+  }
+
+  function renderTable(section) {
+    const tbody = document.getElementById(section + 'Table');
+    const items = data[section];
+    const countEl = document.getElementById(section === 'main' ? 'mainCount' : 'vkCount');
+    if (countEl) countEl.textContent = items.length;
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:40px; color:#64748b;">Нет данных. Добавьте первую платформу.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map((p, i) => {
+      const color = platformColors[p.name] || '#3b82f6';
+      const calc = calcDaysLeft(p.balance, p.daily);
+      const date = calcDate(p.balance, p.daily);
+      const statusClass = p.status === 'Active' ? 'active' : 'pause';
+      const progress = p.daily > 0 ? Math.min((p.balance / (p.daily * 30)) * 100, 100) : 0;
+
+      return `
+        <tr data-section="${section}" data-index="${i}">
+          <td>
+            <div class="platform-name">
+              <span class="drag-handle" title="Перетащите для изменения порядка"></span>
+              <div class="platform-logo" draggable="true" style="background:${color}" data-section="${section}" data-index="${i}">${getInitials(p.name)}</div>
+              ${p.name}
+            </div>
+          </td>
+          <td>
+            <div>
+              <span class="money ${p.balance > 0 ? 'positive' : 'neutral'} editable" 
+                    onclick="editCell(event, '${section}', ${i}, 'balance', ${p.balance})">${formatMoney(p.balance, p.currency)}</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+          </td>
+          <td>
+            <span class="status-toggle ${statusClass}" onclick="toggleStatus('${section}', ${i})">
+              <span class="status-dot"></span>
+              ${p.status}
+            </span>
+          </td>
+          <td>
+            <span class="money editable" 
+                  onclick="editCell(event, '${section}', ${i}, 'daily', ${p.daily})">${formatMoney(p.daily, p.currency)}</span>
+          </td>
+          <td class="money">${formatMoney(parseFloat(calc.sixDay), p.currency)}</td>
+          <td>${date}</td>
+          <td>
+            <span class="money editable" 
+                  onclick="editCell(event, '${section}', ${i}, 'credited', ${p.credited})">${formatMoney(p.credited, p.currency)}</span>
+          </td>
+          <td>${p.lastTopup || '—'}</td>
+          <td><button class="delete-btn" onclick="deletePlatform('${section}', ${i})" title="Удалить">✕</button></td>
+        </tr>
+      `;
+    }).join('');
+
+    setupDragAndDrop(tbody, section);
+  }
+
+  function toggleStatus(section, index) {
+    const item = data[section][index];
+    item.status = item.status === 'Active' ? 'Pause' : 'Active';
+    saveLocal();
+    render();
+    autoSaveToFirebase();
+    showToast(`Статус: ${item.name} → ${item.status}`);
+  }
+
+  function setupDragAndDrop(tbody, section) {
+    const logos = tbody.querySelectorAll('.platform-logo[draggable="true"]');
+    const rows = tbody.querySelectorAll('tr');
+    let dragRow = null;
+
+    logos.forEach(logo => {
+      logo.addEventListener('dragstart', (e) => {
+        dragRow = logo.closest('tr');
+        dragRow.classList.add('dragging-row');
+        logo.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      logo.addEventListener('dragend', () => {
+        if (dragRow) dragRow.classList.remove('dragging-row');
+        logo.classList.remove('dragging');
+        rows.forEach(r => r.classList.remove('drag-over'));
+        dragRow = null;
+      });
+    });
+
+    rows.forEach(row => {
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (row !== dragRow) row.classList.add('drag-over');
+      });
+
+      row.addEventListener('dragleave', () => {
+        row.classList.remove('drag-over');
+      });
+
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over');
+        if (!dragRow || dragRow === row) return;
+
+        const fromIndex = parseInt(dragRow.dataset.index);
+        const toIndex = parseInt(row.dataset.index);
+
+        const items = data[section];
+        const [movedItem] = items.splice(fromIndex, 1);
+        items.splice(toIndex, 0, movedItem);
+
+        saveLocal();
+        render();
+        autoSaveToFirebase();
+        showToast('Порядок изменён');
+      });
+    });
+  }
+
+  function editCell(event, section, index, field, currentValue) {
+    event.stopPropagation();
+    const span = event.currentTarget;
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.step = '0.01';
+    input.min = '0';
+    input.className = 'edit-input';
+    input.value = currentValue;
+    
+    span.replaceWith(input);
+    input.focus();
+    input.select();
+
+    function commit() {
+      let val = parseFloat(input.value.replace(',', '.'));
+      if (isNaN(val) || val < 0) val = 0;
+      data[section][index][field] = val;
+      
+      if (field === 'credited') {
+        data[section][index].lastTopup = formatCurrentDateTime();
+      }
+      
+      saveLocal();
+      render();
+      autoSaveToFirebase();
+    }
+
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { render(); }
+    });
+  }
+
+  function render() {
+    renderStats();
+    renderTable('main');
+    renderTable('vk');
+  }
+
+  function openModal(section) {
+    currentSection = section;
+    document.getElementById('modalTitle').textContent = section === 'main' ? 'Добавить платформу' : 'Добавить аккаунт VK';
+    document.getElementById('platformForm').reset();
+    document.getElementById('modal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+  }
+
+  document.getElementById('platformForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newItem = {
+      name: document.getElementById('f_name').value,
+      balance: parseFloat(document.getElementById('f_balance').value) || 0,
+      currency: document.getElementById('f_currency').value,
+      status: document.getElementById('f_status').value,
+      daily: parseFloat(document.getElementById('f_daily').value) || 0,
+      credited: parseFloat(document.getElementById('f_credited').value) || 0,
+      lastTopup: document.getElementById('f_lastTopup').value.replace('T', ' ')
+    };
+    data[currentSection].push(newItem);
+    saveLocal();
+    render();
+    autoSaveToFirebase();
+    closeModal();
+    showToast('Платформа добавлена');
+  });
+
+  function deletePlatform(section, index) {
+    if (!confirm('Удалить эту платформу?')) return;
+    data[section].splice(index, 1);
+    saveLocal();
+    render();
+    autoSaveToFirebase();
+    showToast('Платформа удалена', 'error');
+  }
+
+  function saveLocal() {
+    localStorage.setItem('adDashData', JSON.stringify(data));
+  }
+
+  // Автосохранение в Firebase с задержкой (debounce)
+  let autoSaveTimer = null;
+  function autoSaveToFirebase() {
+    if (!fbInitialized || isOffline) return;
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+      saveToFirebase();
+    }, 1500); // Сохраняем через 1.5 сек после последнего изменения
+  }
+
+  function exportCSV(section) {
+    const items = data[section];
+    if (items.length === 0) { showToast('Нет данных для экспорта', 'error'); return; }
+    const headers = ['Источник','Баланс','Валюта','Статус','Расход/день','6 дней','Хватит до','Зачислено','Последнее пополнение'];
+    const rows = items.map(p => {
+      const calc = calcDaysLeft(p.balance, p.daily);
+      return [p.name, p.balance, p.currency, p.status, p.daily, calc.sixDay, calcDate(p.balance, p.daily), p.credited, p.lastTopup].join(';');
+    });
+    const csv = '\uFEFF' + [headers.join(';'), ...rows].join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `platforms_${section}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV экспортирован');
+  }
+
+  function toggleOffline() {
+    isOffline = !isOffline;
+    const btn = document.getElementById('offlineBtn');
+    const saveBtn = document.getElementById('btnSaveFb');
+    const loadBtn = document.getElementById('btnLoadFb');
+    
+    btn.textContent = isOffline ? ' Онлайн' : '⚡ Офлайн';
+    btn.style.background = isOffline ? 'rgba(74,222,128,0.15)' : '';
+    btn.style.color = isOffline ? '#4ade80' : '';
+    
+    saveBtn.disabled = isOffline;
+    loadBtn.disabled = isOffline;
+    
+    if (isOffline) {
+      setFbStatus('', 'Firebase: офлайн');
+      showToast('Офлайн-режим включён');
+    } else {
+      setFbStatus('connected', 'Firebase: подключено');
+      showToast('Онлайн-режим');
+      saveToFirebase();
+    }
+  }
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show' + (type === 'error' ? ' error' : type === 'info' ? ' info' : '');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target.id === 'modal') closeModal();
+  });
+
+  // Инициализация
+  render();
+</script>
+</body>
+</html>
